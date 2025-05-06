@@ -1,0 +1,38 @@
+# Ambiente virtual
+.env
+*.env
+venv/
+.venv/
+
+# Arquivos temporários do sistema
+__pycache__/
+*.py[cod]
+*.log
+*.tmp
+*.bak
+
+# Arquivos gerados automaticamente (baixados ou temporários)
+*.xls
+*.xlsx
+*_arquivos/
+sheet001.htm
+testes.py
+
+# Arquivos do VS Code
+.vscode/
+.settings/
+
+# Logs
+logs/
+*.log
+
+# Token e credenciais
+token.json
+credentials.json
+
+# Arquivos de cache do Jupyter ou IPython
+.ipynb_checkpoints/
+
+# Outros
+.DS_Store
+Thumbs.db
