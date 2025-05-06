@@ -3,6 +3,7 @@
 *.env
 venv/
 .venv/
+.bat
 
 # Arquivos temporários do sistema
 __pycache__/
