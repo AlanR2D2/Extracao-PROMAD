@@ -37,13 +37,11 @@ class Logger:
         )
 
         actual_datetimestamp = datetime.now().strftime("%d-%m-%Y_%H-%M-%S")
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        logs_main_folder = os.path.join(current_dir, "logs")
-        logs_folder = os.path.join(logs_main_folder, log_name)
-        os.makedirs(logs_folder, exist_ok=True)
+        logs_main_folder = os.path.abspath("./logs")
+        os.makedirs(logs_main_folder, exist_ok=True)
 
         log_filename = datetime.now().strftime(f"{log_name}_{actual_datetimestamp}.log")
-        log_path = os.path.join(logs_folder, log_filename)
+        log_path = os.path.join(logs_main_folder, log_filename)
 
         file_handler = RotatingFileHandler(
             log_path, maxBytes=10 * 1024 * 1024, backupCount=300, encoding="utf-8"
@@ -72,7 +70,7 @@ class Logger:
         log = self.get_logger()
         return log
     
-def manter_apenas_ultimos_logs(caminho_logs='./logs/PROMAD', quantidade=5):
+def manter_apenas_ultimos_logs(caminho_logs='./logs', quantidade=5):
     try:
         # Verifica se o diretório existe
         if not os.path.exists(caminho_logs):
@@ -96,8 +94,6 @@ def manter_apenas_ultimos_logs(caminho_logs='./logs/PROMAD', quantidade=5):
 
     except Exception as e:
         print(f"[ERRO] Falha ao limpar os logs: {e}")
-
-
 
 log = Logger('PROMAD', silencer=['selenium']).get_logger()
 

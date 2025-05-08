@@ -8,8 +8,11 @@ import send_email
 import traceback
 from monitoring import log
 import glob
+from dotenv import load_dotenv
 
-SHEET = '1e9smWH4dVpTomORLW2s1bIRU-EY_7cyKAF0R4EehaDU'
+load_dotenv()
+
+SHEET = os.getenv("sheet")  # ID da google sheet
 
 def error(msg):
     print(msg)
@@ -97,15 +100,29 @@ def Move_Down_to_dir(arq):
         msg = f'Ocorreu um erro na Move_Down_to_dir (arq) na linha {traceback.extract_tb(e.__traceback__)[0].lineno}, ERROR: {e}'
         error(msg)
 
-def arq_to_sheet(arq, aba):
-    log.info('Iniciando leitura de arquivo HTML exportado como Excel e envio para aba no Google Sheets...')
+def arq_to_sheet(arq_ativo, arq_inativo, aba):
+    log.info('Iniciando leitura de arquivos HTML (ativo e inativo) exportados como Excel e envio para aba no Google Sheets...')
     try:
-        dfs = pd.read_html(arq, header=1)
-        df = dfs[0]
-        df.fillna('', inplace=True)
-        df['Data Distribuição'] = pd.to_datetime(df['Data Distribuição'], errors='coerce', dayfirst=True)
-        df = df[df['Data Distribuição'] > pd.to_datetime('08/03/2024', dayfirst=True)]
-        df['Data Distribuição'] = df['Data Distribuição'].dt.strftime('%d/%m/%Y')
+        # DataFrame com status Ativo
+        dfs_ativo = pd.read_html(arq_ativo, header=1)
+        df_ativo = dfs_ativo[0]
+        df_ativo.fillna('', inplace=True)
+        df_ativo['Data Distribuição'] = pd.to_datetime(df_ativo['Data Distribuição'], errors='coerce', dayfirst=True)
+        df_ativo = df_ativo[df_ativo['Data Distribuição'] > pd.to_datetime('08/03/2024', dayfirst=True)]
+        df_ativo['Data Distribuição'] = df_ativo['Data Distribuição'].dt.strftime('%d/%m/%Y') #Volta para str pois sheet n permite obj
+        df_ativo['Status'] = 'Ativo'
+
+        # DataFrame com status Inativo
+        dfs_inativo = pd.read_html(arq_inativo, header=1)
+        df_inativo = dfs_inativo[0]
+        df_inativo.fillna('', inplace=True)
+        df_inativo['Data Distribuição'] = pd.to_datetime(df_inativo['Data Distribuição'], errors='coerce', dayfirst=True)
+        df_inativo = df_inativo[df_inativo['Data Distribuição'] > pd.to_datetime('08/03/2024', dayfirst=True)]
+        df_inativo['Data Distribuição'] = df_inativo['Data Distribuição'].dt.strftime('%d/%m/%Y')
+        df_inativo['Status'] = 'Inativo'
+
+        # Junta os dois DataFrames
+        df = pd.concat([df_ativo, df_inativo], ignore_index=True)
 
         coloumns = df.columns.to_list()
         values = df.values.tolist()
@@ -113,9 +130,12 @@ def arq_to_sheet(arq, aba):
         send_to_googlesheet.EscreveValores(f'{aba}!A1', [coloumns], SHEET)
         send_to_googlesheet.EscreveValores(f'{aba}!A2', values, SHEET)
 
-        print("[OK] Tabela extraída e enviada com sucesso")
+        log.info("[OK] Tabela combinada extraída e enviada com sucesso ao Google Sheets.")
     except Exception as e:
-        print(f"[ERRO] Falha na função arq_to_sheet na linha {traceback.extract_tb(e.__traceback__)[0].lineno}: {e}")
+        linha = traceback.extract_tb(e.__traceback__)[0].lineno
+        msg = f"[ERRO] Falha na função arq_to_sheet na linha {linha}: {e}"
+        error(msg)
+
 
 def arq_to_append_sheet(arq, aba):
     log.info('Iniciando leitura e append de planilha Excel para aba do Google Sheets...')
@@ -174,4 +194,4 @@ def excluir_arquivos_xls(diretorio='.'):
             os.remove(arquivo)
             print(f"[OK] Arquivo excluído: {arquivo}")
         except Exception as e:
-            print(f"[ERRO] Não foi possível excluir {arquivo}: {e}")
+            log(f"[ERRO] Não foi possível excluir {arquivo}: {e}")

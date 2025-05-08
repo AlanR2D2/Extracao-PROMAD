@@ -48,7 +48,10 @@ def scroll_to_element(driver, element):
         log.error(f"Erro ao realizar scroll até o elemento: {e}")
 
 @retry(stop=stop_after_attempt(3), wait=wait_fixed(5))
-def get_data():
+def get_data(status:str):
+    '''
+    :pram status recebe 'Ativo' ou 'Inativo' 
+    '''
     try:
         log.info("Acessando página de login")
         nav.get("https://www.integra.adv.br/login-integra.asp")
@@ -73,14 +76,29 @@ def get_data():
 
         time.sleep(3)
 
-        botao_fase = wait.until(EC.presence_of_element_located((By.XPATH, '//*[@id="frmRelatorio"]/div[2]/div[2]/div[21]/div[1]/button')))
-        nav.execute_script("arguments[0].click();", botao_fase)
+        filtro_fase = wait.until(EC.presence_of_element_located((By.XPATH, '//*[@id="frmRelatorio"]/div[2]/div[2]/div[21]/div[1]/button')))
+        scroll_to_element(nav, filtro_fase)
+        nav.execute_script("arguments[0].click();", filtro_fase)
         log.info("Filtro de 'Fase' aberto")
 
         todos_opt = wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="frmRelatorio"]/div[2]/div[2]/div[21]/div[1]/div/div/ul/li[1]/a/span[2]')))
-        scroll_to_element(nav, todos_opt)
         todos_opt.click()
-        log.info("Filtro 'Todos' aplicado")
+        log.info("Filtro 'Todos' clicado")
+
+        filtro_status = wait.until(EC.presence_of_element_located((By.XPATH, '//*[@id="frmRelatorio"]/div[2]/div[2]/div[13]/div[2]/button')))
+        scroll_to_element(nav, filtro_status)
+        nav.execute_script("arguments[0].click();", filtro_status)
+        log.info("Filtro de 'status' aberto")
+
+        if status == 'Ativo':
+            status_opt = wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="frmRelatorio"]/div[2]/div[2]/div[13]/div[2]/div/ul/li[2]/label')))
+        elif status == 'Inativo':
+            status_opt = wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="frmRelatorio"]/div[2]/div[2]/div[13]/div[2]/div/ul/li[3]/label')))
+        else:
+            raise Exception('O valor de status da def get_data deve ser "Ativo" ou "Inativo"')
+        
+        status_opt.click()
+        log.info(f"Filtro 'status' selecionado como {status}")
 
         pesquisar_button = wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="btnPesquisar"]')))
         scroll_to_element(nav, pesquisar_button)
@@ -103,17 +121,18 @@ def get_data():
         contr_atualizado.click()
         log.info("Modelo de relatório 'CONTROLE ATUALIZADO' selecionado")
 
-        time.sleep(10)
+        time.sleep(5)
 
         gerar_excel = wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="btnIlimitado"]')))
         scroll_to_element(nav, gerar_excel)
         gerar_excel.click()
         log.info("Download do relatório iniciado")
 
-        time.sleep(50)
+        time.sleep(22)
         log.info('get_data finalizada com sucesso')
 
     except Exception as e:
         msg = f'Ocorreu erro na def get_data na linha {traceback.extract_tb(e.__traceback__)[0].lineno}. ERROR: {e}'
         log.error(msg)
         raise Exception("Algo em get_data. Iniciando outra tentativa")
+    
