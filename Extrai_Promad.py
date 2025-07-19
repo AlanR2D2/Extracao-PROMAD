@@ -32,7 +32,7 @@ options.add_argument(f"--user-data-dir={temp_dir}")
 options.add_argument("--no-sandbox")
 options.add_argument("--disable-dev-shm-usage")
 options.add_argument("--disable-gpu")
-#options.add_argument("--headless=new")
+options.add_argument("--headless=new")
 
 log.info("Criando navegador com opções headless")
 nav = webdriver.Chrome(service=servico, options=options)
