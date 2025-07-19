@@ -32,7 +32,7 @@ options.add_argument(f"--user-data-dir={temp_dir}")
 options.add_argument("--no-sandbox")
 options.add_argument("--disable-dev-shm-usage")
 options.add_argument("--disable-gpu")
-options.add_argument("--headless=new")
+#options.add_argument("--headless=new")
 
 log.info("Criando navegador com opções headless")
 nav = webdriver.Chrome(service=servico, options=options)
@@ -76,6 +76,7 @@ def get_data(status:str):
 
         time.sleep(3)
 
+        # Seleciona filtro fase - Todos
         filtro_fase = wait.until(EC.presence_of_element_located((By.XPATH, '//*[@id="frmRelatorio"]/div[2]/div[2]/div[21]/div[1]/button')))
         scroll_to_element(nav, filtro_fase)
         nav.execute_script("arguments[0].click();", filtro_fase)
@@ -85,6 +86,7 @@ def get_data(status:str):
         todos_opt.click()
         log.info("Filtro 'Todos' clicado")
 
+        # Filtro status - Ativo ou Inativo
         filtro_status = wait.until(EC.presence_of_element_located((By.XPATH, '//*[@id="frmRelatorio"]/div[2]/div[2]/div[13]/div[2]/button')))
         scroll_to_element(nav, filtro_status)
         nav.execute_script("arguments[0].click();", filtro_status)
@@ -109,15 +111,14 @@ def get_data(status:str):
         scroll_to_element(nav, excel_button)
         excel_button.click()
         log.info("Relatório Excel selecionado")
-
+        
         modelo_slct = wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="divRelatorioMovimentacao"]/div/div/div/div/button')))
         scroll_to_element(nav, modelo_slct)
         modelo_slct.click()
 
         modelo_label = wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="divRelatorioMovimentacao"]/div/div/div/div/div[1]/div/div/input')))
         modelo_label.send_keys('CONTROLE ATUALIZADO')
-
-        contr_atualizado = wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="divRelatorioMovimentacao"]/div/div/div/div/div[1]/ul/li[2]/label')))
+        contr_atualizado = wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="divRelatorioMovimentacao"]/div/div/div/div/div[1]/ul/li[3]/label/span')))
         contr_atualizado.click()
         log.info("Modelo de relatório 'CONTROLE ATUALIZADO' selecionado")
 
