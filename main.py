@@ -7,6 +7,8 @@ import os
 import send_email
 import traceback
 from dotenv import load_dotenv
+import pytz
+
 
 load_dotenv()
 
@@ -54,7 +56,10 @@ try:
     send_to_googlesheet.LimpaIntervalo ('Dados!A2:Z', sheet)
     # Ignora dados antes de 08/03/2024
     Trata_arquivos.arq_to_sheet (arq_ext_ativo,arq_ext_inativo, 'Dados')
-    ultima_atualizacao = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    # Define o fuso horário de Brasília
+    timezone_brasilia = pytz.timezone('America/Sao_Paulo')
+    # Obtém o horário atual ajustado para hoaráio brasil
+    ultima_atualizacao = datetime.now(timezone_brasilia).strftime("%d/%m/%Y %H:%M:%S")
     send_to_googlesheet.EscreveValores('Ultima atualização!A2', [[ultima_atualizacao]], sheet)  
     
     os.remove(arq_ext_ativo)
