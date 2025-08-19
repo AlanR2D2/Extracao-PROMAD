@@ -20,6 +20,12 @@ load_dotenv()
 email = os.getenv("EMAIL")
 senha = os.getenv("SENHA")
 
+def error (msg):
+    print(msg)
+    log.error (msg)
+    send_email.send_email_error(msg)
+    exit()
+
 log.info("Inicializando ChromeDriver")
 path_chromedriver = ChromeDriverManager().install()
 path_chromedriver = path_chromedriver.replace('THIRD_PARTY_NOTICES.chromedriver', 'chromedriver.exe')
@@ -106,7 +112,7 @@ def get_data(status:str):
         scroll_to_element(nav, pesquisar_button)
         pesquisar_button.click()
         log.info("Botão 'Pesquisar' clicado")
-        
+
         time.sleep(10)            
         excel_button = wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="frmRelatorio"]/div[3]/div[1]/div/ul/li[5]/div/span')))
         scroll_to_element(nav, excel_button) 
@@ -135,6 +141,6 @@ def get_data(status:str):
 
     except Exception as e:
         msg = f'Ocorreu erro na def get_data na linha {traceback.extract_tb(e.__traceback__)[0].lineno}. ERROR: {e}'
-        log.error(msg)
+        error(msg)
         raise Exception("Algo em get_data. Iniciando outra tentativa")
     
