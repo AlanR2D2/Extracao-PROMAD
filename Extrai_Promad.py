@@ -106,12 +106,13 @@ def get_data(status:str):
         scroll_to_element(nav, pesquisar_button)
         pesquisar_button.click()
         log.info("Botão 'Pesquisar' clicado")
-
+        
+        time.sleep(10)            
         excel_button = wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="frmRelatorio"]/div[3]/div[1]/div/ul/li[5]/div/span')))
-        scroll_to_element(nav, excel_button)
+        scroll_to_element(nav, excel_button) 
         excel_button.click()
         log.info("Relatório Excel selecionado")
-        
+            
         modelo_slct = wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="divRelatorioMovimentacao"]/div/div/div/div/button')))
         scroll_to_element(nav, modelo_slct)
         modelo_slct.click()
