@@ -88,9 +88,13 @@ def get_data(status:str):
         nav.execute_script("arguments[0].click();", filtro_fase)
         log.info("Filtro de 'Fase' aberto")
 
+        #time.sleep(3)
+
         todos_opt = wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="frmRelatorio"]/div[2]/div[2]/div[21]/div[1]/div/div/ul/li[1]/a/span[2]')))
         todos_opt.click()
         log.info("Filtro 'Todos' clicado")
+
+        #time.sleep(3)
 
         # Filtro status - Ativo ou Inativo
         filtro_status = wait.until(EC.presence_of_element_located((By.XPATH, '//*[@id="frmRelatorio"]/div[2]/div[2]/div[13]/div[2]/button')))
@@ -105,8 +109,12 @@ def get_data(status:str):
         else:
             raise Exception('O valor de status da def get_data deve ser "Ativo" ou "Inativo"')
         
+        time.sleep(3)
+        
         status_opt.click()
         log.info(f"Filtro 'status' selecionado como {status}")
+
+        time.sleep(3)
 
         pesquisar_button = wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="btnPesquisar"]')))
         scroll_to_element(nav, pesquisar_button)
@@ -118,10 +126,14 @@ def get_data(status:str):
         scroll_to_element(nav, excel_button) 
         excel_button.click()
         log.info("Relatório Excel selecionado")
+
+        time.sleep(3)
             
         modelo_slct = wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="divRelatorioMovimentacao"]/div/div/div/div/button')))
         scroll_to_element(nav, modelo_slct)
         modelo_slct.click()
+
+        time.sleep(3)
 
         modelo_label = wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="divRelatorioMovimentacao"]/div/div/div/div/div[1]/div/div/input')))
         modelo_label.send_keys('CONTROLE ATUALIZADO')
