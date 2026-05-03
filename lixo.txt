@@ -1,0 +1,47 @@
+let
+    Fonte = SharePoint.Files("https://doutoraconsumidor.sharepoint.com/sites/DoutoraConsumidor", [ApiVersion = 15]),
+
+    #"Arquivo Excel" =
+        Fonte{[Name="Nibo_Aeroline_Recebimentos.xlsx",
+        #"Folder Path"="https://doutoraconsumidor.sharepoint.com/sites/DoutoraConsumidor/Documentos Compartilhados/Planilhas Aerolines/"]}[Content],
+
+    #"Pasta de Trabalho Importada do Excel" = Excel.Workbook(#"Arquivo Excel"),
+    Sheet_Sheet = #"Pasta de Trabalho Importada do Excel"{[Item="Sheet",Kind="Sheet"]}[Data],
+    #"Cabeçalhos Promovidos" = Table.PromoteHeaders(Sheet_Sheet, [PromoteAllScalars=true]),
+
+    #"Tipo Alterado" = Table.TransformColumnTypes(#"Cabeçalhos Promovidos",{
+        {"entryId", type text}, 
+        {"accountName", type text}, 
+        {"stakeholderName", type text}, 
+        {"categoryName", type text}, 
+        {"accrualDate", type datetime}, 
+        {"identifier", type text}, 
+        {"valor calculado", type number}, 
+        {"description", type text}
+    }),
+
+    #"Tipo Alterado2" = Table.TransformColumnTypes(#"Tipo Alterado",{
+        {"date", type date}, 
+        {"costCenterValue", type number}
+    }),
+
+    #"Linhas Filtradas" = Table.SelectRows(#"Tipo Alterado2", each ([entryId] <> "")),
+
+    TabelaDate = Table.SelectColumns(#"Linhas Filtradas",
+        {"entryId", "accountName", "stakeholderName", "categoryName", "date", "identifier", "valor calculado", "categoryValue" ,"categoryType", "categoryParent","costCenterDescription", "description", "costCenterValue"}),
+
+    #"Coluna Tipo de Data (Date)" = Table.AddColumn(TabelaDate, "tipo de data", each "Date"),
+    #"Coluna Renomeada (Date)" = Table.RenameColumns(#"Coluna Tipo de Data (Date)", {{"date", "data"}}),
+
+    TabelaAccrualDate = Table.SelectColumns(#"Linhas Filtradas",
+        {"entryId", "accountName", "stakeholderName", "categoryName", "accrualDate", "identifier", "valor calculado","categoryValue","categoryType","categoryParent", "costCenterDescription", "description", "costCenterValue"}),
+
+    #"Coluna Tipo de Data (AccrualDate)" = Table.AddColumn(TabelaAccrualDate, "tipo de data", each "AccrualDate"),
+    #"Coluna Renomeada (AccrualDate)" = Table.RenameColumns(#"Coluna Tipo de Data (AccrualDate)", {{"accrualDate", "data"}}),
+
+    TabelaFinal = Table.Combine({#"Coluna Renomeada (Date)", #"Coluna Renomeada (AccrualDate)"}),
+
+    #"Valor Substituído" = Table.ReplaceValue(TabelaFinal,"AccrualDate","Competência",Replacer.ReplaceText,{"tipo de data"}),
+    #"Valor Substituído1" = Table.ReplaceValue(#"Valor Substituído","Date","Caixa",Replacer.ReplaceText,{"tipo de data"})
+in
+    #"Valor Substituído1"

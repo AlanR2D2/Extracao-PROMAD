@@ -118,8 +118,8 @@ def arq_to_sheet(arq_ativo, arq_inativo, aba, sheet_id=None):
         coloumns = df.columns.to_list()
         values = df.values.tolist()
 
-        # send_to_googlesheet.EscreveValores(f'{aba}!A1', [coloumns], sheet_id)
-        # send_to_googlesheet.EscreveValores(f'{aba}!A2', values, sheet_id)
+        send_to_googlesheet.EscreveValores(f'{aba}!A1', [coloumns], sheet_id)
+        send_to_googlesheet.EscreveValores(f'{aba}!A2', values, sheet_id)
 
         log.info("[OK] Tabela combinada extraída e enviada com sucesso ao Google Sheets.")
         return df

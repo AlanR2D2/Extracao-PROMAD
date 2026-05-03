@@ -1,4 +1,5 @@
 import os
+import time
 import msal
 import requests
 from monitoring import log
@@ -98,9 +99,16 @@ def upload_file(local_path, remote_folder, remote_filename):
             "Authorization": f"Bearer {token}",
             "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         }
-        with open(local_path, "rb") as f:
-            resp = requests.put(url, headers=headers, data=f)
-        resp.raise_for_status()
+        max_retries = 3
+        for attempt in range(1, max_retries + 1):
+            with open(local_path, "rb") as f:
+                resp = requests.put(url, headers=headers, data=f)
+            if resp.status_code == 423 and attempt < max_retries:
+                log.warning(f"[RETRY] Arquivo bloqueado (423), tentativa {attempt}/{max_retries}. Aguardando 10s...")
+                time.sleep(10)
+                continue
+            resp.raise_for_status()
+            break
     else:
         # Upload session para arquivos grandes
         url = f"{GRAPH_BASE}/drives/{drive_id}/root:/{remote_path}:/createUploadSession"
