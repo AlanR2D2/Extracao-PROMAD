@@ -116,36 +116,36 @@ try:
         ultima_atualizacao = datetime.now(timezone_brasilia).strftime("%d/%m/%Y %H:%M:%S")
         send_to_googlesheet.EscreveValores('Ultima atualização!A2', [[ultima_atualizacao]], emp_sheet)
 
-        # ------- Upload para SharePoint -------
-        try:
-            sp_folder = empresa["sp_folder"]
-            sp_filename = empresa["sp_filename"]
-            sp_timestamp = empresa["sp_timestamp"]
-            dir_script = os.path.dirname(os.path.abspath(__file__))
-            xlsx_path = os.path.join(dir_script, sp_filename)
-            timestamp_path = os.path.join(dir_script, sp_timestamp)
-
-            # Upload planilha de dados
-            df_resultado.to_excel(xlsx_path, index=False, engine='openpyxl', sheet_name='Sheet')
-            send_to_sharepoint.upload_file(xlsx_path, sp_folder, sp_filename)
-            if os.path.exists(xlsx_path):
-                os.remove(xlsx_path)
-
-            # Upload planilha de timestamp
-            import pandas as pd
-            df_ts = pd.DataFrame({'Última Atualização': [ultima_atualizacao]})
-            df_ts.to_excel(timestamp_path, index=False, engine='openpyxl', sheet_name='Sheet')
-            send_to_sharepoint.upload_file(timestamp_path, sp_folder, sp_timestamp)
-            if os.path.exists(timestamp_path):
-                os.remove(timestamp_path)
-        except Exception as sp_err:
-            sp_msg = f'[SharePoint] Erro no upload para {nome}: {sp_err}'
-            log.error(sp_msg)
-            send_email.send_email_error(sp_msg)
-            # Limpa arquivos temporários mesmo com erro
-            for tmp in [xlsx_path, timestamp_path]:
-                if os.path.exists(tmp):
-                    os.remove(tmp)
+        # ------- Upload para SharePoint (DESATIVADO) -------
+        # try:
+        #     sp_folder = empresa["sp_folder"]
+        #     sp_filename = empresa["sp_filename"]
+        #     sp_timestamp = empresa["sp_timestamp"]
+        #     dir_script = os.path.dirname(os.path.abspath(__file__))
+        #     xlsx_path = os.path.join(dir_script, sp_filename)
+        #     timestamp_path = os.path.join(dir_script, sp_timestamp)
+        #
+        #     # Upload planilha de dados
+        #     df_resultado.to_excel(xlsx_path, index=False, engine='openpyxl', sheet_name='Sheet')
+        #     send_to_sharepoint.upload_file(xlsx_path, sp_folder, sp_filename)
+        #     if os.path.exists(xlsx_path):
+        #         os.remove(xlsx_path)
+        #
+        #     # Upload planilha de timestamp
+        #     import pandas as pd
+        #     df_ts = pd.DataFrame({'Última Atualização': [ultima_atualizacao]})
+        #     df_ts.to_excel(timestamp_path, index=False, engine='openpyxl', sheet_name='Sheet')
+        #     send_to_sharepoint.upload_file(timestamp_path, sp_folder, sp_timestamp)
+        #     if os.path.exists(timestamp_path):
+        #         os.remove(timestamp_path)
+        # except Exception as sp_err:
+        #     sp_msg = f'[SharePoint] Erro no upload para {nome}: {sp_err}'
+        #     log.error(sp_msg)
+        #     send_email.send_email_error(sp_msg)
+        #     # Limpa arquivos temporários mesmo com erro
+        #     for tmp in [xlsx_path, timestamp_path]:
+        #         if os.path.exists(tmp):
+        #             os.remove(tmp)
 
         # Remove os .xls trabalhados
         if os.path.exists(arq_ext_ativo):
