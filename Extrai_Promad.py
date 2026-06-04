@@ -100,7 +100,7 @@ def scroll_to_element(driver, element):
         log.error(f"Erro ao realizar scroll até o elemento: {e}")
 
 
-@retry(stop=stop_after_attempt(3), wait=wait_fixed(5))
+@retry(stop=stop_after_attempt(3), wait=wait_fixed(5), reraise=True)
 def get_data(status: str, email: str = None, senha: str = None, filtro_nome: str = 'CONTROLE ATUALIZADO'):
     '''
     :param status recebe 'Ativo' ou 'Inativo'
