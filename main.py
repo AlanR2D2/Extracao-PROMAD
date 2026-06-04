@@ -24,16 +24,17 @@ EMPRESAS = [
         "sp_filename": "Promad.xlsx",
         "sp_timestamp": "promad_timestamp.xlsx",
     },
-    {
-        "nome": "Aeroline",
-        "email": os.getenv("EMAIL_AEROLINE"),
-        "senha": os.getenv("SENHA_AEROLINE"),
-        "sheet": os.getenv("sheet_AEROLINE"),
-        "filtro": "CONTROLE 2026",
-        "sp_folder": "Planilhas Aerolines",
-        "sp_filename": "Promad_aeroline.xlsx",
-        "sp_timestamp": "promad_aeroline_timestamp.xlsx",
-    },
+    # ----- Aeroline DESATIVADA: não há mais extração desta empresa -----
+    # {
+    #     "nome": "Aeroline",
+    #     "email": os.getenv("EMAIL_AEROLINE"),
+    #     "senha": os.getenv("SENHA_AEROLINE"),
+    #     "sheet": os.getenv("sheet_AEROLINE"),
+    #     "filtro": "CONTROLE 2026",
+    #     "sp_folder": "Planilhas Aerolines",
+    #     "sp_filename": "Promad_aeroline.xlsx",
+    #     "sp_timestamp": "promad_aeroline_timestamp.xlsx",
+    # },
 ]
 
 # Deixa somente os 5 últimos Logs
