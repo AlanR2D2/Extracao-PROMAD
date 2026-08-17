@@ -57,13 +57,27 @@ try:
         log.info(f"========== Iniciando extração para: {nome} ==========")
         now = data_hora_formatada()
 
-        # ------- Extraindo processos com status Ativo -------
-        Extrai_Promad.get_data('Ativo', email=emp_email, senha=emp_senha, filtro_nome=emp_filtro)
+        # ------- Extraindo processos com status Ativo (com tentativas) -------
+        NUM_TENTATIVAS = 3
 
         arq_ativo = f'CONTROLE_ATUALIZADO_ativo_{nome}_{now}'
         arq_ext_ativo = f'{arq_ativo}.xls'
-        Trata_arquivos.RenomeiaUltimoArq(arq_ativo, 'xls')
-        Trata_arquivos.Move_Down_to_dir(arq_ext_ativo)
+
+        for i in range(1, NUM_TENTATIVAS + 1):
+            try:
+                log.info(f"Tentativa {i}/{NUM_TENTATIVAS} para extrair 'Ativo' - {nome}")
+                Extrai_Promad.get_data('Ativo', email=emp_email, senha=emp_senha, filtro_nome=emp_filtro)
+                Trata_arquivos.RenomeiaUltimoArq(arq_ativo, 'xls')
+                Trata_arquivos.Move_Down_to_dir(arq_ext_ativo)
+
+                if os.path.exists(arq_ext_ativo) and os.path.getsize(arq_ext_ativo) > 0:
+                    log.info(f"Arquivo 'Ativo' obtido com {os.path.getsize(arq_ext_ativo)} bytes")
+                    break
+                log.warning(f"Arquivo 'Ativo' vazio ou ausente na tentativa {i}.")
+            except Exception as e:
+                log.warning(f"Falha na tentativa {i} de 'Ativo' para {nome}: {e}")
+        else:
+            raise RuntimeError(f"Não foi possível obter o arquivo 'Ativo' válido para {nome} após {NUM_TENTATIVAS} tentativas.")
 
         # ------- Extraindo processos com status Inativo (tentativas, fica com o MAIOR arquivo) -------
         NUM_TENTATIVAS = 3
@@ -82,6 +96,12 @@ try:
                     size = os.path.getsize(tentativa_file)
                     log.info(f"Arquivo '{tentativa_file}' obtido com {size} bytes")
                     candidatos.append((tentativa_file, size))
+                    # Com a espera correta pelo fim do download, a 1ª tentativa já
+                    # traz o arquivo completo. Não repetir evita ~10 min de execução
+                    # desnecessária (e que a run atravesse a limpeza horária do /tmp).
+                    if size > 0:
+                        log.info(f"Arquivo 'Inativo' válido obtido na tentativa {i}; pulando tentativas restantes.")
+                        break
                 else:
                     log.warning(f"Arquivo '{tentativa_file}' não encontrado após mover.")
             except Exception as e:

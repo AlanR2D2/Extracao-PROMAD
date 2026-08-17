@@ -22,30 +22,95 @@ class FileError(Exception):
     pass
 
 def obter_pasta_downloads():
-    """Retorna o diretório dedicado de downloads do Chrome, ou fallback para ~/Downloads."""
+    """Retorna o diretório dedicado de downloads do Chrome.
+
+    NÃO cai mais para ~/Downloads: aquela pasta guarda exports antigos e o
+    fallback fazia o script pegar um arquivo de meses atrás e publicá-lo na
+    planilha como se fosse atual. Se o diretório dedicado sumiu (ex.: a limpeza
+    horária do /tmp apagou no meio da execução), é melhor falhar e deixar a
+    tentativa seguinte refazer o download.
+    """
     import Extrai_Promad
     download_dir = Extrai_Promad.get_download_dir()
     if download_dir and os.path.exists(download_dir):
         log.info(f'Usando diretório de downloads dedicado: {download_dir}')
         return download_dir
-    log.info('Obtendo pasta de downloads do sistema operacional...')
-    return os.path.join(os.path.expanduser("~"), "Downloads")
+    raise FileError(
+        f'Diretório dedicado de downloads indisponível (valor: {download_dir}). '
+        'O download precisa ser refeito.'
+    )
+
+# Extensões que o Chrome usa enquanto o download ainda está em andamento
+EXT_PARCIAIS = ('.crdownload', '.part', '.tmp')
+
+# Tempo máximo de espera pelo término de um download (segundos)
+TIMEOUT_DOWNLOAD = int(os.getenv("TIMEOUT_DOWNLOAD", "420"))
+
+
+def aguardar_download_completo(pasta_downloads, timeout=TIMEOUT_DOWNLOAD, intervalo=2, estabilidade=3):
+    """Espera o Chrome terminar o download e devolve o caminho do arquivo final.
+
+    O download só é considerado concluído quando não há nenhum arquivo parcial
+    (.crdownload) na pasta e o tamanho do arquivo mais recente para de crescer
+    por `estabilidade` verificações seguidas. Sem isso o script pegava o
+    .crdownload ainda em andamento e gerava arquivos de 0 bytes.
+    """
+    log.info(f'Aguardando conclusão do download em {pasta_downloads} (timeout={timeout}s)...')
+    limite = time.time() + timeout
+    ultimo_tamanho = -1
+    repeticoes = 0
+
+    while time.time() < limite:
+        try:
+            nomes = os.listdir(pasta_downloads)
+        except FileNotFoundError:
+            raise FileError(f"Pasta de downloads não existe: {pasta_downloads}")
+
+        parciais = [n for n in nomes if n.lower().endswith(EXT_PARCIAIS)]
+        completos = [
+            os.path.join(pasta_downloads, n)
+            for n in nomes
+            if not n.lower().endswith(EXT_PARCIAIS)
+        ]
+        completos = [p for p in completos if os.path.isfile(p) and os.path.getsize(p) > 0]
+
+        if parciais or not completos:
+            # Ainda baixando (ou nada baixado ainda) — reinicia a contagem de estabilidade
+            ultimo_tamanho = -1
+            repeticoes = 0
+            time.sleep(intervalo)
+            continue
+
+        candidato = max(completos, key=os.path.getctime)
+        tamanho = os.path.getsize(candidato)
+
+        if tamanho == ultimo_tamanho:
+            repeticoes += 1
+            if repeticoes >= estabilidade:
+                log.info(f'Download concluído: {candidato} ({tamanho} bytes)')
+                return candidato
+        else:
+            ultimo_tamanho = tamanho
+            repeticoes = 0
+
+        time.sleep(intervalo)
+
+    raise FileError(
+        f"Timeout de {timeout}s aguardando o download terminar em {pasta_downloads}. "
+        f"Conteúdo atual: {os.listdir(pasta_downloads)}"
+    )
+
 
 def RenomeiaUltimoArq(nome, ext):
     log.info('Renomeando último arquivo baixado...')
     nome = nome.replace('/', '-')
     print(f'Renomeando arquivo baixado para {nome + ext}')
 
-    time.sleep(10)
-
     pasta_downloads = obter_pasta_downloads()
     novo_nome = nome + '.' + ext
     novo_path = os.path.join(pasta_downloads, novo_nome)
 
-    todos_arquivos = [os.path.join(pasta_downloads, f) for f in os.listdir(pasta_downloads)]
-    if not todos_arquivos:
-        raise FileError(f"Nenhum arquivo encontrado em {pasta_downloads}")
-    path_ultimo_arq = max(todos_arquivos, key=os.path.getctime)
+    path_ultimo_arq = aguardar_download_completo(pasta_downloads)
 
     print(f'Ultimo arquivo é {path_ultimo_arq}')
 
@@ -56,15 +121,19 @@ def RenomeiaUltimoArq(nome, ext):
             msg = f'Erro ao tentar remover arquivo existente na linha {traceback.extract_tb(e.__traceback__)[0].lineno}: {e}'
             raise FileError(msg)
 
+    ultimo_erro = None
     for i in range(10):
         try:
             os.rename(path_ultimo_arq, novo_path)
             print(f'Arquivo renomeado para {novo_nome}')
             break
         except Exception as e:
+            ultimo_erro = e
             print('Parece que o arquivo ainda não terminou seu download ou está aberto...')
             print(f'Erro: {e}')
             time.sleep(5)
+    else:
+        raise FileError(f'Não foi possível renomear {path_ultimo_arq} para {novo_path}: {ultimo_erro}')
 
 def Move_Down_to_dir(arq):
     log.info('Movendo arquivo da pasta de downloads para pasta do script...')
